@@ -27,7 +27,10 @@ Basic installation expample (with `lazy.nvim`):
     dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = {},
     keys = {
-        { "<C-/>", "<cmd>Dragonfly<cr>" }
+        { "/", "<cmd>DragonflyBuffer<cr>" },
+        { "?", "<cmd>DragonflyBufferReplace<cr>" },
+        { "<C-/>", "<cmd>DragonflyProject<cr>" },
+        { "<C-?>", "<cmd>DragonflyProjectReplace<cr>" },
     }
 }
 ```
@@ -47,7 +50,10 @@ Basic installation expample (with `lazy.nvim`):
         }
     },
     keys = {
-        { "<C-/>", "<cmd>Dragonfly<cr>" }
+        { "/", "<cmd>DragonflyBuffer<cr>" },
+        { "?", "<cmd>DragonflyBufferReplace<cr>" },
+        { "<C-/>", "<cmd>DragonflyProject<cr>" },
+        { "<C-?>", "<cmd>DragonflyProjectReplace<cr>" },
     }
 }
 ```
@@ -77,7 +83,10 @@ Basic installation expample (with `lazy.nvim`):
 
     },
     keys = {
-        { "<C-/>", "<cmd>Dragonfly<cr>" }
+        { "/", "<cmd>DragonflyBuffer<cr>" },
+        { "?", "<cmd>DragonflyBufferReplace<cr>" },
+        { "<C-/>", "<cmd>DragonflyProject<cr>" },
+        { "<C-?>", "<cmd>DragonflyProjectReplace<cr>" },
     }
 },
 
@@ -85,7 +94,7 @@ Basic installation expample (with `lazy.nvim`):
 </details>
 
 <details>
-    <summary>Example for `bufferline.nvim` title (like in demo)</summary>
+    <summary>Example config for `bufferline.nvim` title (like in demo)</summary>
 
 ```lua
 {

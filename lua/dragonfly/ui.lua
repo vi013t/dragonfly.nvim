@@ -3,15 +3,12 @@ local ui = {}
 local config = require("dragonfly.config")
 local state = require("dragonfly.state")
 local api = require("dragonfly.api")
+local utils = require("dragonfly.utils")
 
 ui.matches = {}
 
 ---@type (Match | boolean)[]
 ui.match_lines = {}
-
-local function exit_insert_mode()
-	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'i', true)
-end
 
 ---@param paths SegmentedMatch[]
 ---
@@ -223,7 +220,7 @@ local function jump_to_match()
 	local blank_lines = 13
 	local match = ui.match_lines[line - blank_lines]
 	if not match then return end
-	vim.api.nvim_set_current_win(ui.previous_window)
+	vim.api.nvim_set_current_win(state.previous_window)
 	vim.cmd(":e " .. match.file_name)
 	vim.fn.cursor({ match.line, match.column })
 end
@@ -236,7 +233,7 @@ local function create_help_window()
 		row = 10,
 		col = -1,
 		width = 31,
-		height = 12,
+		height = 13,
 		style = "minimal",
 		zindex = 9999,
 		border = "rounded",
@@ -256,6 +253,7 @@ local function create_help_window()
 	vim.api.nvim_buf_append_line(ui.help_buffer, { { " <C-r>", highlight = "@type" }, { ": Toggle Regex Searching" } })
 	vim.api.nvim_buf_append_line(ui.help_buffer, { { " <Tab>", highlight = "@type" }, { ": Next text box" } })
 	vim.api.nvim_buf_append_line(ui.help_buffer, { { " <S-Tab>", highlight = "@type" }, { ": Previous text box" } })
+	vim.api.nvim_buf_append_line(ui.help_buffer, { { " <Enter>", highlight = "@type" }, { ": Jump to match" } })
 	vim.api.nvim_buf_append_line(ui.help_buffer, { { " <Esc>", highlight = "@type" }, { ": Unfocus Dragonfly" } })
 	vim.api.nvim_buf_append_line(ui.help_buffer, { { " q", highlight = "@type" }, { ": Close Dragonfly" } })
 	vim.api.nvim_buf_append_line(ui.help_buffer)
@@ -319,20 +317,20 @@ local function create_replace_window()
 		vim.api.nvim_set_current_buf(ui.main_buffer)
 		vim.api.nvim_win_set_cursor(ui.main_window, { 14, 0 })
 		vim.api.nvim_set_option_value("cursorline", true, { win = ui.main_window })
-		exit_insert_mode()
+		utils.exit_insert_mode()
 	end, { buffer = ui.replace_buffer })
 	vim.keymap.set("i", "<CR>", function()
 		vim.api.nvim_set_current_win(ui.main_window)
 		vim.api.nvim_set_current_buf(ui.main_buffer)
 		vim.api.nvim_win_set_cursor(ui.main_window, { 14, 0 })
 		vim.api.nvim_set_option_value("cursorline", true, { win = ui.main_window })
-		exit_insert_mode()
+		utils.exit_insert_mode()
 	end, { buffer = ui.replace_buffer })
 
 	-- Unfocus buffer
 	vim.keymap.set("i", "<Esc>", function()
-		exit_insert_mode()
-		vim.api.nvim_set_current_win(ui.previous_window)
+		utils.exit_insert_mode()
+		vim.api.nvim_set_current_win(state.previous_window)
 	end, { buffer = ui.replace_buffer })
 
 	-- Tab into search
@@ -389,7 +387,7 @@ local function create_search_window()
 
 	vim.keymap.set("i", "<C-?>", function()
 		create_help_window()
-		exit_insert_mode()
+		utils.exit_insert_mode()
 	end, { buffer = ui.search_buffer })
 
 	-- Tab into replace box
@@ -410,8 +408,8 @@ local function create_search_window()
 
 	-- Unfocus buffer
 	vim.keymap.set("i", "<Esc>", function()
-		exit_insert_mode()
-		vim.api.nvim_set_current_win(ui.previous_window)
+		utils.exit_insert_mode()
+		vim.api.nvim_set_current_win(state.previous_window)
 	end, { buffer = ui.search_buffer })
 
 	-- Close buffer
@@ -441,8 +439,8 @@ local function create_search_options_window()
 end
 
 function ui.open_window()
-	if not ui.previous_window then
-		ui.previous_window = vim.fn.win_getid()
+	if not state.previous_window then
+		state.previous_window = vim.fn.win_getid()
 	end
 
 	ui.close(true)
@@ -462,7 +460,7 @@ function ui.open_window()
 end
 
 function ui.is_open()
-	return vim.api.nvim_buf_is_valid(ui.main_buffer)
+	return ui.main_buffer and vim.api.nvim_buf_is_valid(ui.main_buffer)
 end
 
 function ui.close(no_callback)
@@ -477,7 +475,7 @@ function ui.close(no_callback)
 
 	if was_open and not no_callback then
 		config.options.on_close()
-		exit_insert_mode()
+		utils.exit_insert_mode()
 	end
 end
 
