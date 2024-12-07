@@ -6,6 +6,9 @@ local api = require("dragonfly.api")
 
 ui.matches = {}
 
+---@type (Match | boolean)[]
+ui.match_lines = {}
+
 local function exit_insert_mode()
 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'i', true)
 end
@@ -18,7 +21,8 @@ local function group_paths(paths, iteration)
 	local folder_entries = {}
 	for _, match in ipairs(paths) do
 		if #match.segments == 0 then
-			table.insert(folder_entries, { line = match.line, column = match.column, match = match.match })
+			table.insert(folder_entries,
+				{ line = match.line, column = match.column, match = match.match, file_name = match.file_name })
 			goto continue
 		end
 
@@ -42,8 +46,8 @@ end
 
 ---@alias Match { file_name: string, line: number, column: number, match: string }
 
----@alias SegmentedMatch { segments: string[], line: number, column: number, match: string }
----@alias MatchDirectory table<string, (Match | MatchDirectory)[]>
+---@alias SegmentedMatch { segments: string[], line: number, column: number, match: string, file_name: string }
+---@alias MatchDirectory table<string | number, (Match | MatchDirectory)[]>
 
 ---@param results string[]
 ---
@@ -58,8 +62,7 @@ local function group_results(results)
 				file_name = assert(file_name),
 				line = tonumber(assert(line)),
 				column = tonumber(assert(column)),
-				match =
-					match
+				match = assert(match)
 			})
 	end
 
@@ -75,16 +78,17 @@ local function group_results(results)
 			segments = path_segments,
 			line = match.line,
 			column = match.column,
-			match = match.match
+			match = match.match,
+			file_name = match.file_name
 		})
 	end
 
 	return group_paths(paths)
 end
 
-local function draw_folders(folders, indent, last_stack)
+---@param folders MatchDirectory
+local function draw_folders(folders, indent)
 	indent = indent or 0
-	last_stack = last_stack or {}
 
 	local indentation = ("│ "):rep(indent - 1)
 	if indent == 0 or indent == 1 then indentation = "" end
@@ -99,7 +103,6 @@ local function draw_folders(folders, indent, last_stack)
 	end
 
 	-- Folders
-	local folder_index = 1
 	for name, contents in pairs(folders) do
 		if type(name) == "number" then goto continue end
 
@@ -132,9 +135,9 @@ local function draw_folders(folders, indent, last_stack)
 		table.insert(line, { " " .. name })
 
 		vim.api.nvim_buf_append_line(ui.main_buffer, line)
+		table.insert(ui.match_lines, false)
 
-		table.insert(last_stack, paircount == folder_index)
-		draw_folders(contents, indent + 1, last_stack)
+		draw_folders(contents, indent + 1)
 
 		paircount = paircount + 1
 
@@ -143,6 +146,7 @@ local function draw_folders(folders, indent, last_stack)
 
 	-- File matches
 	for index, match in ipairs(folders) do
+		---@cast match Match
 		local bar = "│ "
 		if index == #folders then bar = "└ " end
 
@@ -150,11 +154,13 @@ local function draw_folders(folders, indent, last_stack)
 			{ indentation .. bar .. tostring(match.line) .. ":" .. tostring(match.column) .. ": ", highlight = "@comment" },
 			{ match.match,                                                                         highlight = "@type" },
 		})
+		table.insert(ui.match_lines, match)
 	end
 end
 
-local function perform_search()
+function ui.perform_search()
 	ui.matches = {}
+	ui.match_lines = {}
 	ui.search_string = table.concat(vim.api.nvim_buf_get_lines(ui.search_buffer, 0, 1, true), "\n")
 	if ui.search_string:match("^%s*$") then
 		ui.redraw()
@@ -212,8 +218,14 @@ function ui.redraw()
 	vim.api.nvim_buf_add_highlight(ui.search_options_buffer, -1, regex_highlight, 0, 3, -1)
 end
 
-local function go_to(line)
-	local line_number, column_number = line:match("On line (%d+), column (%d+)")
+local function jump_to_match()
+	local line = vim.api.nvim_win_get_cursor(ui.main_window)[1]
+	local blank_lines = 13
+	local match = ui.match_lines[line - blank_lines]
+	if not match then return end
+	vim.api.nvim_set_current_win(ui.previous_window)
+	vim.cmd(":e " .. match.file_name)
+	vim.fn.cursor({ match.line, match.column })
 end
 
 local function create_help_window()
@@ -224,7 +236,7 @@ local function create_help_window()
 		row = 10,
 		col = -1,
 		width = 31,
-		height = 20,
+		height = 12,
 		style = "minimal",
 		zindex = 9999,
 		border = "rounded",
@@ -263,6 +275,7 @@ local function create_main_window()
 	vim.api.nvim_set_option_value("filetype", "dragonfly", { buf = ui.main_buffer })
 	vim.api.nvim_set_option_value("winhighlight", "Normal:NormalFloat,NormalNC:NormalFloat", { win = ui.main_window })
 	vim.keymap.set("n", "q", ui.close, { buffer = ui.main_buffer })
+	vim.keymap.set("n", "<CR>", jump_to_match, { buffer = ui.main_buffer })
 end
 
 local function create_help_hint_window()
@@ -365,13 +378,13 @@ local function create_search_window()
 	-- Toggle case sensitive
 	vim.keymap.set("i", "<C-c>", function()
 		state.search_options.case_sensitive = not state.search_options.case_sensitive
-		perform_search()
+		ui.perform_search()
 	end, { buffer = ui.search_buffer })
 
 	-- Toggle regex
 	vim.keymap.set("i", "<C-r>", function()
 		state.search_options.regex = not state.search_options.regex
-		perform_search()
+		ui.perform_search()
 	end, { buffer = ui.search_buffer })
 
 	vim.keymap.set("i", "<C-?>", function()
@@ -409,7 +422,7 @@ local function create_search_window()
 	-- Ripgrep
 	vim.api.nvim_create_autocmd("TextChangedI", {
 		buffer = ui.search_buffer,
-		callback = perform_search
+		callback = ui.perform_search
 	})
 end
 
@@ -446,6 +459,10 @@ function ui.open_window()
 	create_help_hint_window()
 
 	ui.redraw()
+end
+
+function ui.is_open()
+	return vim.api.nvim_buf_is_valid(ui.main_buffer)
 end
 
 function ui.close(no_callback)

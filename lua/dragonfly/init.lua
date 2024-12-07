@@ -17,6 +17,14 @@ function public.setup(options)
 		state.replace = false
 		ui.open_window()
 	end, {})
+
+	vim.api.nvim_create_autocmd("BufWritePost", {
+		callback = function()
+			if ui.is_open() then
+				ui.perform_search()
+			end
+		end
+	})
 end
 
 return public
