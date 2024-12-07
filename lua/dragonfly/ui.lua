@@ -2,76 +2,12 @@ local ui = {}
 
 local config = require("dragonfly.config")
 local state = require("dragonfly.state")
+local api = require("dragonfly.api")
 
 ui.matches = {}
 
-local is_first_draw_call = true
-
 local function exit_insert_mode()
 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'i', true)
-end
-
-local function write_line(parts, options)
-	options = options or {}
-	local buffer = options.buffer or ui.main_buffer
-
-	if parts == nil then parts = "" end
-	if type(parts) == "string" then
-		parts = { { text = parts } }
-	end
-
-	if parts.highlight then
-		parts = { parts }
-	end
-
-	-- Text
-	local text = ""
-	for _, part in ipairs(parts) do
-		text = text .. (part[1] or part.text)
-	end
-
-	-- Alignment
-	local shift = 0
-	if options.center_in then
-		shift = math.floor(vim.api.nvim_win_get_width(options.center_in) / 2) -
-			math.floor(vim.fn.strdisplaywidth(text) / 2)
-		text = (" "):rep(shift) .. text
-	end
-
-	-- Line number
-	local line = vim.api.nvim_buf_line_count(buffer)
-	if is_first_draw_call then
-		line = 0
-	end
-
-	-- Column number
-	local start = -1
-	if is_first_draw_call then
-		start = 0
-	end
-	is_first_draw_call = false
-
-	-- Write the line
-	vim.api.nvim_buf_set_lines(buffer, start, -1, false, { text })
-
-	-- Highlighting (colors, italics, bold, etc.)
-	text = ""
-	for _, part in ipairs(parts) do
-		text = text .. (part[1] or part.text)
-		if part.highlight then
-			local highlight_group = part.highlight
-
-			-- Add the highlight
-			vim.api.nvim_buf_add_highlight(
-				buffer,                      -- Buffer
-				-1,                          -- Namespace ID
-				highlight_group,             -- Highlight group
-				line,                        -- Line
-				#text - #(part[1] or part.text) + shift, -- Start column
-				#text + shift                -- End column
-			)
-		end
-	end
 end
 
 ---@param paths SegmentedMatch[]
@@ -152,13 +88,13 @@ local function draw_folders(folders, indent, last_stack)
 		local bar = "│"
 		if index == #folders then bar = "└" end
 
-		write_line({
-			{ text = indentation, highlight = "@comment" },
-			{ text = bar, highlight = "@comment", },
-			{ text = "  On line ", highlight = "@comment" },
-			{ text = tostring(position.line), highlight = "@type" },
-			{ text = ", column ", highlight = "@comment" },
-			{ text = tostring(position.column), highlight = "@type" },
+		vim.api.nvim_buf_append_line(ui.main_buffer, {
+			{ indentation, highlight = "@comment" },
+			{ bar, highlight = "@comment", },
+			{ "  On line ", highlight = "@comment" },
+			{ tostring(position.line), highlight = "@type" },
+			{ ", column ", highlight = "@comment" },
+			{ tostring(position.column), highlight = "@type" },
 		})
 	end
 
@@ -193,17 +129,17 @@ local function draw_folders(folders, indent, last_stack)
 		end
 
 		local line = {
-			{ text = indentation, highlight = "@comment" }
+			{ indentation, highlight = "@comment" }
 		}
 
 		if indent ~= 0 then
-			table.insert(line, { text = "│ ", highlight = "@comment" })
+			table.insert(line, { "│ ", highlight = "@comment" })
 		end
 
-		table.insert(line, { text = icon, highlight = icon_color })
-		table.insert(line, { text = " " .. name })
+		table.insert(line, { icon, highlight = icon_color })
+		table.insert(line, { " " .. name })
 
-		write_line(line)
+		vim.api.nvim_buf_append_line(ui.main_buffer, line)
 
 		table.insert(last_stack, paircount == index)
 		draw_folders(contents, indent + 1, last_stack)
@@ -227,7 +163,7 @@ local function perform_search()
 	if not state.search_options.case_sensitive then table.insert(ripgrep_command, "--ignore-case") end
 	table.insert(ripgrep_command, ui.search_string)
 
-	local output = assert(vim.system(ripgrep_command, { text = true }):wait().stdout)
+	local output = assert(vim.system(ripgrep_command, { true }):wait().stdout)
 	for line in output:gmatch("[^\r\n]+") do
 		table.insert(ui.matches, line)
 	end
@@ -235,31 +171,31 @@ local function perform_search()
 end
 
 function ui.redraw()
-	is_first_draw_call = true
+	api.drawn_buffers = {}
 
-	write_line()
-	write_line({ { text = "  Search ", highlight = "@type" } })
-	write_line()
-	write_line()
-	write_line()
-	write_line()
+	vim.api.nvim_buf_append_line(ui.main_buffer)
+	vim.api.nvim_buf_append_line(ui.main_buffer, { "  Search ", highlight = "@type" })
+	vim.api.nvim_buf_append_line(ui.main_buffer)
+	vim.api.nvim_buf_append_line(ui.main_buffer)
+	vim.api.nvim_buf_append_line(ui.main_buffer)
+	vim.api.nvim_buf_append_line(ui.main_buffer)
 
 	if state.replace then
-		write_line({ { text = "  Replace 󰛔", highlight = "@type" } })
-		write_line()
-		write_line()
-		write_line()
-		write_line()
+		vim.api.nvim_buf_append_line(ui.main_buffer, { "  Replace 󰛔", highlight = "@type" })
+		vim.api.nvim_buf_append_line(ui.main_buffer)
+		vim.api.nvim_buf_append_line(ui.main_buffer)
+		vim.api.nvim_buf_append_line(ui.main_buffer)
+		vim.api.nvim_buf_append_line(ui.main_buffer)
 	end
 
-	write_line({ { text = "  Matches 󱨉", highlight = "@type" } })
-	write_line()
+	vim.api.nvim_buf_append_line(ui.main_buffer, { "  Matches 󱨉", highlight = "@type" })
+	vim.api.nvim_buf_append_line(ui.main_buffer)
 
 	local matches = group_results(ui.matches)
 	draw_folders(matches)
 
-	write_line()
-	write_line()
+	vim.api.nvim_buf_append_line(ui.main_buffer)
+	vim.api.nvim_buf_append_line(ui.main_buffer)
 
 	vim.api.nvim_buf_set_lines(ui.search_options_buffer, 0, 1, true, { "Aa .* " })
 
@@ -297,19 +233,19 @@ local function create_help_window()
 		vim.api.nvim_command("startinsert")
 	end, { buffer = ui.help_buffer })
 
-	write_line({ "Dragonfly Help", highlight = "@type" }, { buffer = ui.help_buffer, center_in = ui.help_window })
-	write_line("", { buffer = ui.help_buffer })
-	write_line({ { " <C-c>", highlight = "@type" }, { ": Toggle Case Sensitivity" } }, { buffer = ui.help_buffer })
-	write_line({ { " <C-r>", highlight = "@type" }, { ": Toggle Regex Searching" } }, { buffer = ui.help_buffer })
-	write_line({ { " <Tab>", highlight = "@type" }, { ": Next text box" } }, { buffer = ui.help_buffer })
-	write_line({ { " <S-Tab>", highlight = "@type" }, { ": Previous text box" } }, { buffer = ui.help_buffer })
-	write_line({ { " <Esc>", highlight = "@type" }, { ": Unfocus Dragonfly" } }, { buffer = ui.help_buffer })
-	write_line({ { " q", highlight = "@type" }, { ": Close Dragonfly" } }, { buffer = ui.help_buffer })
-	write_line("", { buffer = ui.help_buffer })
-	write_line("", { buffer = ui.help_buffer })
-	write_line({ " Press q to close this window", highlight = "@comment" }, { buffer = ui.help_buffer })
+	vim.api.nvim_buf_append_line(ui.help_buffer, { "Dragonfly Help", highlight = "@type" },
+		{ center_in = ui.help_window })
+	vim.api.nvim_buf_append_line(ui.help_buffer)
+	vim.api.nvim_buf_append_line(ui.help_buffer, { { " <C-c>", highlight = "@type" }, { ": Toggle Case Sensitivity" } })
+	vim.api.nvim_buf_append_line(ui.help_buffer, { { " <C-r>", highlight = "@type" }, { ": Toggle Regex Searching" } })
+	vim.api.nvim_buf_append_line(ui.help_buffer, { { " <Tab>", highlight = "@type" }, { ": Next text box" } })
+	vim.api.nvim_buf_append_line(ui.help_buffer, { { " <S-Tab>", highlight = "@type" }, { ": Previous text box" } })
+	vim.api.nvim_buf_append_line(ui.help_buffer, { { " <Esc>", highlight = "@type" }, { ": Unfocus Dragonfly" } })
+	vim.api.nvim_buf_append_line(ui.help_buffer, { { " q", highlight = "@type" }, { ": Close Dragonfly" } })
+	vim.api.nvim_buf_append_line(ui.help_buffer)
+	vim.api.nvim_buf_append_line(ui.help_buffer)
+	vim.api.nvim_buf_append_line(ui.help_buffer, { " Press q to close this window", highlight = "@comment" })
 end
-
 
 local function create_main_window()
 	ui.main_buffer = vim.api.nvim_create_buf(false, true)

@@ -1,5 +1,9 @@
 local state = {
-	replace = true
+	replace = true,
+	search_options = {
+		case_sensitive = false,
+		regex = false,
+	}
 }
 
 return state

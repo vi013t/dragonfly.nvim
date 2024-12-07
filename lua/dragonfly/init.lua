@@ -1,5 +1,7 @@
 local public = {}
 
+require("dragonfly.api")
+
 local ui = require("dragonfly.ui")
 local config = require("dragonfly.config")
 local state = require("dragonfly.state")
