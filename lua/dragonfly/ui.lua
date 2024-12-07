@@ -18,7 +18,7 @@ local function group_paths(paths, iteration)
 	local folder_entries = {}
 	for _, match in ipairs(paths) do
 		if #match.segments == 0 then
-			table.insert(folder_entries, { line = match.line, column = match.column })
+			table.insert(folder_entries, { line = match.line, column = match.column, match = match.match })
 			goto continue
 		end
 
@@ -40,9 +40,9 @@ local function group_paths(paths, iteration)
 	return folder_entries
 end
 
----@alias Match { file_name: string, line: number, column: number }
+---@alias Match { file_name: string, line: number, column: number, match: string }
 
----@alias SegmentedMatch { segments: string[], line: number, column: number }
+---@alias SegmentedMatch { segments: string[], line: number, column: number, match: string }
 ---@alias MatchDirectory table<string, (Match | MatchDirectory)[]>
 
 ---@param results string[]
@@ -52,9 +52,15 @@ local function group_results(results)
 	---@type Match[]
 	local matches = {}
 	for _, result in ipairs(results) do
-		local file_name, line, column = result:match("^([^:]+):(%d+):(%d+)")
+		local file_name, line, column, match = result:match("^([^:]+):(%d+):(%d+):(.+)")
 		table.insert(matches,
-			{ file_name = assert(file_name), line = tonumber(assert(line)), column = tonumber(assert(column)) })
+			{
+				file_name = assert(file_name),
+				line = tonumber(assert(line)),
+				column = tonumber(assert(column)),
+				match =
+					match
+			})
 	end
 
 	---@type SegmentedMatch[]
@@ -68,7 +74,8 @@ local function group_results(results)
 		table.insert(paths, {
 			segments = path_segments,
 			line = match.line,
-			column = match.column
+			column = match.column,
+			match = match.match
 		})
 	end
 
@@ -83,21 +90,6 @@ local function draw_folders(folders, indent, last_stack)
 	if indent == 0 or indent == 1 then indentation = "" end
 	indentation = "  " .. indentation
 
-	-- File matches
-	for index, position in ipairs(folders) do
-		local bar = "│"
-		if index == #folders then bar = "└" end
-
-		vim.api.nvim_buf_append_line(ui.main_buffer, {
-			{ indentation, highlight = "@comment" },
-			{ bar, highlight = "@comment", },
-			{ "  On line ", highlight = "@comment" },
-			{ tostring(position.line), highlight = "@type" },
-			{ ", column ", highlight = "@comment" },
-			{ tostring(position.column), highlight = "@type" },
-		})
-	end
-
 	local paircount = 0
 
 	for name, _ in pairs(folders) do
@@ -107,7 +99,7 @@ local function draw_folders(folders, indent, last_stack)
 	end
 
 	-- Folders
-	local index = 1
+	local folder_index = 1
 	for name, contents in pairs(folders) do
 		if type(name) == "number" then goto continue end
 
@@ -141,12 +133,23 @@ local function draw_folders(folders, indent, last_stack)
 
 		vim.api.nvim_buf_append_line(ui.main_buffer, line)
 
-		table.insert(last_stack, paircount == index)
+		table.insert(last_stack, paircount == folder_index)
 		draw_folders(contents, indent + 1, last_stack)
 
 		paircount = paircount + 1
 
 		::continue::
+	end
+
+	-- File matches
+	for index, match in ipairs(folders) do
+		local bar = "│ "
+		if index == #folders then bar = "└ " end
+
+		vim.api.nvim_buf_append_line(ui.main_buffer, {
+			{ indentation .. bar .. tostring(match.line) .. ":" .. tostring(match.column) .. ": ", highlight = "@comment" },
+			{ match.match,                                                                         highlight = "@type" },
+		})
 	end
 end
 
@@ -158,6 +161,7 @@ local function perform_search()
 		return
 	end
 
+	-- Generate ripgrep command
 	local ripgrep_command = { "rg", "--no-heading", "--vimgrep", "--color=never", "--only-matching", }
 	if not state.search_options.regex then table.insert(ripgrep_command, "--fixed-strings") end
 	if not state.search_options.case_sensitive then table.insert(ripgrep_command, "--ignore-case") end
