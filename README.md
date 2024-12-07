@@ -6,11 +6,14 @@ A pretty search & replace plugin for Neovim, supporting both single file replace
 
 ### Installation & Configuration
 
+It's required to [install ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation).
+
 Basic installation expample (with `lazy.nvim`):
 
 ```lua
 {
     "vi013t/dragonfly.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = {},
     keys = {
         { "<C-/>", "<cmd>Dragonfly<cr>" }
@@ -41,6 +44,7 @@ Basic installation expample (with `lazy.nvim`):
 ```lua
 {
     "vi013t/dragonfly.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = {
         on_open = function()
             if vim.fn.exists(":NeoTreeClose") then vim.cmd("NeoTreeClose") end
@@ -56,5 +60,36 @@ Basic installation expample (with `lazy.nvim`):
 },
 
 ```
+</details>
+
+<details>
+    <summary>Example for `bufferline.nvim` title (like in demo)</summary>
+
+```lua
+{
+    "akinsho/bufferline.nvim",
+    config = function()
+
+        -- Create highlight group
+        local bg = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("NormalFloat")), "bg#")
+        local fg = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("@type")), "fg#")
+        vim.api.nvim_set_hl(0, "BufferlineDragonflyOffset", { bg = bg, fg = fg })
+
+        -- Set up bufferline
+        bufferline.setup({
+            options = {
+                offsets = {
+                    {
+                        filetype = "dragonfly",
+                        text = "󰠭 Dragonfly",
+                        highlight = "BufferlineDragonflyOffset"
+                    }
+                }
+            },
+        })
+    end
+}
+```
+
 </details>
 
