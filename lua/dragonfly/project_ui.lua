@@ -10,6 +10,8 @@ project_ui.matches = {}
 ---@type (Match | boolean)[]
 project_ui.match_lines = {}
 
+--- Groups matches into a recursive structure for displaying.
+---
 ---@param paths SegmentedMatch[]
 ---
 ---@return MatchDirectory
@@ -46,6 +48,8 @@ end
 ---@alias SegmentedMatch { segments: string[], line: number, column: number, match: string, file_name: string }
 ---@alias MatchDirectory table<string | number, (Match | MatchDirectory)[]>
 
+--- Groups search results into a recursive structure.
+---
 ---@param results string[]
 ---
 ---@return MatchDirectory
@@ -83,8 +87,12 @@ local function group_results(results)
 	return group_paths(paths)
 end
 
+--- Draws the matches onto the window.
+---
 ---@param folders MatchDirectory
-local function draw_folders(folders, indent)
+---
+---@return nil
+local function draw_matches(folders, indent)
 	indent = indent or 0
 
 	local indentation = ("│ "):rep(indent - 1)
@@ -134,7 +142,7 @@ local function draw_folders(folders, indent)
 		vim.api.nvim_buf_append_line(project_ui.main_buffer, line)
 		table.insert(project_ui.match_lines, false)
 
-		draw_folders(contents, indent + 1)
+		draw_matches(contents, indent + 1)
 
 		paircount = paircount + 1
 
@@ -155,11 +163,19 @@ local function draw_folders(folders, indent)
 	end
 end
 
+--- Performs a project-wide search. This runs ripgrep with the current text in the searchbox, accounting
+--- for search options such as case sensitivity and regex. The UI is redrawn, updating all matches shown
+--- in the window.
+---
+---@return nil
 function project_ui.perform_search()
 	if not project_ui.is_open() then return end
 
+	-- Reset matches
 	project_ui.matches = {}
 	project_ui.match_lines = {}
+
+	-- Generate search string
 	project_ui.search_string = table.concat(vim.api.nvim_buf_get_lines(project_ui.search_buffer, 0, 1, true), "\n")
 	if project_ui.search_string:match("^%s*$") then
 		project_ui.redraw()
@@ -172,13 +188,19 @@ function project_ui.perform_search()
 	if not state.search_options.case_sensitive then table.insert(ripgrep_command, "--ignore-case") end
 	table.insert(ripgrep_command, project_ui.search_string)
 
+	-- Run ripgrep
 	local output = assert(vim.system(ripgrep_command, { true }):wait().stdout)
 	for line in output:gmatch("[^\r\n]+") do
 		table.insert(project_ui.matches, line)
 	end
+
+	-- Redraw UI
 	project_ui.redraw()
 end
 
+--- Redraws the UI.
+---
+---@return nil
 function project_ui.redraw()
 	api.drawn_buffers = {}
 
@@ -201,7 +223,7 @@ function project_ui.redraw()
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
 
 	local matches = group_results(project_ui.matches)
-	draw_folders(matches)
+	draw_matches(matches)
 
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
@@ -217,6 +239,9 @@ function project_ui.redraw()
 	vim.api.nvim_buf_add_highlight(project_ui.search_options_buffer, -1, regex_highlight, 0, 3, -1)
 end
 
+--- Jumps to the match that the cursor is over. If the cursor is not over a match, does nothing.
+---
+---@return nil
 local function jump_to_match()
 	local line = vim.api.nvim_win_get_cursor(project_ui.main_window)[1]
 	local blank_lines = 8
@@ -228,6 +253,9 @@ local function jump_to_match()
 	vim.fn.cursor({ match.line, match.column })
 end
 
+--- Creates the help window.
+---
+---@return nil
 local function create_help_window()
 	project_ui.help_buffer = vim.api.nvim_create_buf(false, true)
 	project_ui.help_window = vim.api.nvim_open_win(project_ui.help_buffer, true, {
@@ -267,6 +295,9 @@ local function create_help_window()
 	vim.api.nvim_buf_append_line(project_ui.help_buffer, { " Press q to close this window", highlight = "@comment" })
 end
 
+--- Creates the main UI window.
+---
+---@return nil
 local function create_main_window()
 	project_ui.main_buffer = vim.api.nvim_create_buf(false, true)
 	project_ui.main_window = vim.api.nvim_open_win(project_ui.main_buffer, false, {
@@ -283,6 +314,10 @@ local function create_main_window()
 	vim.keymap.set("n", "<CR>", jump_to_match, { buffer = project_ui.main_buffer })
 end
 
+--- Creates the help hint window, which is the window at the bottom of the main window that shows
+--- the "press for help" binding.
+---
+---@return nil
 local function create_help_hint_window()
 	project_ui.help_hint_buffer = vim.api.nvim_create_buf(false, true)
 	project_ui.help_hint_window = vim.api.nvim_open_win(project_ui.help_hint_buffer, false, {
@@ -300,6 +335,9 @@ local function create_help_hint_window()
 	vim.api.nvim_buf_add_highlight(project_ui.help_hint_buffer, -1, "@type", 0, #"  Press ", #"  Press Ctrl + ?")
 end
 
+--- Creates the replace window, which is the textbox for entering replacement text.
+---
+---@return nil
 local function create_replace_window()
 	project_ui.replace_buffer = vim.api.nvim_create_buf(false, true)
 	project_ui.replace_window = vim.api.nvim_open_win(project_ui.replace_buffer, false, {
@@ -356,6 +394,9 @@ local function create_replace_window()
 	})
 end
 
+--- Creates the search window, which is the textbox for entering search text.
+---
+---@return nil
 local function create_search_window()
 	project_ui.search_buffer = vim.api.nvim_create_buf(false, true)
 	project_ui.search_window = vim.api.nvim_open_win(project_ui.search_buffer, true, {
@@ -450,6 +491,9 @@ local function create_search_window()
 	})
 end
 
+--- Creates the search options window, which shows the case sensitivity and regex options.
+---
+---@return nil
 local function create_search_options_window()
 	project_ui.search_options_buffer = vim.api.nvim_create_buf(false, true)
 	project_ui.search_options_window = vim.api.nvim_open_win(project_ui.search_options_buffer, false, {
@@ -464,6 +508,9 @@ local function create_search_options_window()
 	})
 end
 
+--- Opens a project-wide search window.
+---
+---@return nil
 function project_ui.open_window()
 	if not state.previous_window then
 		state.previous_window = vim.fn.win_getid()
@@ -485,10 +532,16 @@ function project_ui.open_window()
 	project_ui.redraw()
 end
 
+--- Checks if the project UI window is currently open.
+---
+---@return boolean
 function project_ui.is_open()
 	return project_ui.main_buffer and vim.api.nvim_buf_is_valid(project_ui.main_buffer)
 end
 
+--- Closes the project search and replace UI. If it's not open, does nothing.
+---
+---@return nil
 function project_ui.close(no_callback)
 	local was_open = pcall(function()
 		vim.api.nvim_buf_delete(project_ui.search_options_buffer, { force = true })

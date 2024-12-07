@@ -1,3 +1,5 @@
+--- Global state data for the plugin.
+---
 ---@type { replace: boolean, search_options: { case_sensitive: boolean, regex: boolean }, previous_buffer?: number, previous_window: integer | nil, is_searching: boolean }
 local state = {
 	replace = true,
