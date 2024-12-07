@@ -13,10 +13,11 @@ A pretty search & replace plugin for Neovim.
 - Optional case sensitivity
 - Optional regular expression matching and replacing
 - Optional ignoring for gitignored files, dotfiles, etc.
+- Rapid performance with [ripgrep](https://github.com/BurntSushi/ripgrep)
 
 ## Installation & Configuration
 
-It's required to [install ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation) before using `dragonfly.nvim`
+It's required to [install ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation) before using `dragonfly.nvim`.
 
 Basic installation expample (with `lazy.nvim`):
 
@@ -40,6 +41,10 @@ Basic installation expample (with `lazy.nvim`):
     opts = {
         on_open = function() end,
         on_close = function() end,
+        default_search_options = {
+            case_sensitive = false,
+            regex = false,
+        }
     },
     keys = {
         { "<C-/>", "<cmd>Dragonfly<cr>" }
