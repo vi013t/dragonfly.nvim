@@ -96,7 +96,7 @@ function buffer_ui.open_window()
 			utils.exit_insert_mode()
 			state.is_searching = false
 			buffer_ui.close()
-			vim.cmd("%s/" .. buffer_ui.search_string .. "/" .. buffer_ui.replace_string)
+			vim.cmd("%s/" .. buffer_ui.search_string .. "/" .. buffer_ui.replace_string .. "/g")
 			vim.opt.hlsearch = false
 		end, { buffer = buffer_ui.replace_buffer })
 

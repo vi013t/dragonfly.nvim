@@ -124,6 +124,28 @@ Basic installation expample (with `lazy.nvim`):
 
 </details>
 
+## Usage
+
+### Single-Buffer Search
+
+`dragonfly.nvim` provides a prettier single-buffer search and replace. `:DragonflyBuffer` will open a single-buffer search, and `:DragonflyBufferReplace` will open a single-buffer search and replace.
+
+In a search or search-and-replace, pressing `escape` will close and cancel the search/replace. Pressing enter will perform the search/replace.
+
+Use `tab` and `shift + tab` to navigate to the next and previous input boxes, respectively.
+
+Search matches are automatically highlighted, but switching into insert or command mode will unhighlight them all.
+
+### Project Search
+
+`dragonfly.nvim` provides a pretty project-wide search and replace. `:DragonflyProject` will open a project-wide search, and `:DragonflyProjectReplace` will open a project-wide search and replace.
+
+In a search or search-and-replace, pressing escape will unfocus the window and return focus to the previous window.
+
+Use `tab` and `shift + tab` to navigate to the next and previous input boxes, respectively.
+
+Pressing `enter` on a search match will jump you to that match.
+
 ## FAQ
 
 - Why use `dragonfly.nvim` over built-in Vim searching?
