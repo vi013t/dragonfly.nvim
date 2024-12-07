@@ -5,7 +5,7 @@ local buffer_ui = require("dragonfly.buffer_ui")
 local project_ui = require("dragonfly.project_ui")
 
 function commands.create_autocommands()
-	vim.api.nvim_create_autocmd({ "InsertEnter", "CmdwinEnter" }, {
+	vim.api.nvim_create_autocmd({ "InsertEnter", "CmdLineEnter" }, {
 		callback = function()
 			if not state.is_searching then
 				vim.opt.hlsearch = false

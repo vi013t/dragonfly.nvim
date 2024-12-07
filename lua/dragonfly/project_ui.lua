@@ -217,7 +217,8 @@ end
 
 local function jump_to_match()
 	local line = vim.api.nvim_win_get_cursor(project_ui.main_window)[1]
-	local blank_lines = 13
+	local blank_lines = 8
+	if state.replace then blank_lines = blank_lines + 5 end
 	local match = project_ui.match_lines[line - blank_lines]
 	if not match then return end
 	vim.api.nvim_set_current_win(state.previous_window)
@@ -392,6 +393,7 @@ local function create_search_window()
 		project_ui.perform_search()
 	end, { buffer = project_ui.search_buffer })
 
+	-- Help window
 	vim.keymap.set("i", "<C-?>", function()
 		create_help_window()
 		utils.exit_insert_mode()
@@ -411,6 +413,21 @@ local function create_search_window()
 			vim.api.nvim_win_set_cursor(project_ui.replace_window,
 				{ 1, #table.concat(vim.api.nvim_buf_get_lines(project_ui.replace_buffer, 0, 1, true), "\n") })
 		end, { buffer = project_ui.search_buffer })
+	else
+		vim.keymap.set("i", "<Tab>", function()
+			vim.api.nvim_set_current_win(project_ui.main_window)
+			vim.api.nvim_set_current_buf(project_ui.main_buffer)
+			vim.api.nvim_win_set_cursor(project_ui.main_window, { 9, 0 })
+			vim.api.nvim_set_option_value("cursorline", true, { win = project_ui.main_window })
+			utils.exit_insert_mode()
+		end)
+		vim.keymap.set("i", "<CR>", function()
+			vim.api.nvim_set_current_win(project_ui.main_window)
+			vim.api.nvim_set_current_buf(project_ui.main_buffer)
+			vim.api.nvim_win_set_cursor(project_ui.main_window, { 9, 0 })
+			vim.api.nvim_set_option_value("cursorline", true, { win = project_ui.main_window })
+			utils.exit_insert_mode()
+		end)
 	end
 
 	-- Unfocus buffer
