@@ -156,6 +156,8 @@ local function draw_folders(folders, indent)
 end
 
 function project_ui.perform_search()
+	if not project_ui.is_open() then return end
+
 	project_ui.matches = {}
 	project_ui.match_lines = {}
 	project_ui.search_string = table.concat(vim.api.nvim_buf_get_lines(project_ui.search_buffer, 0, 1, true), "\n")
