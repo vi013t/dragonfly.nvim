@@ -5,8 +5,11 @@ local state = require("dragonfly.state")
 local api = require("dragonfly.api")
 local utils = require("dragonfly.utils")
 
+--- The matches found by ripgrep.
 project_ui.matches = {}
 
+--- Data about the match lines displayed in the main window.
+---
 ---@type (Match | boolean)[]
 project_ui.match_lines = {}
 
@@ -512,23 +515,23 @@ end
 ---
 ---@return nil
 function project_ui.open_window()
-	if not state.previous_window then
-		state.previous_window = vim.fn.win_getid()
-	end
+	-- Store the current window
+	if not state.previous_window then state.previous_window = vim.fn.win_getid() end
 
+	-- Close if if it's open
 	project_ui.close(true)
+
+	-- Config callback
 	config.options.on_open()
 
+	-- Create windows
 	create_main_window()
 	create_search_window()
-
-	if state.replace then
-		create_replace_window()
-	end
-
+	if state.replace then create_replace_window() end
 	create_search_options_window()
 	create_help_hint_window()
 
+	-- Redraw the UI
 	project_ui.redraw()
 end
 
