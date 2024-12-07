@@ -486,6 +486,7 @@ local function create_search_options_window()
 		zindex = 999
 	})
 end
+
 function ui.open_window()
 	if not ui.previous_window then
 		ui.previous_window = vim.fn.win_getid()

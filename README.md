@@ -1,12 +1,22 @@
 # `dragonfly.nvim`
 
-A pretty search & replace plugin for Neovim, supporting both single file replacement and project-wide, as well as optionally respecting `.gitignore`.
+A pretty search & replace plugin for Neovim.
 
 ![demo](./docs/demo.png)
 
-### Installation & Configuration
+## Features
 
-It's required to [install ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation).
+`dragonfly.nvim` comes with the following features:
+
+- (Prettier) single file search and replace
+- Project-wide search and replace
+- Optional case sensitivity
+- Optional regular expression matching and replacing
+- Optional ignoring for gitignored files, dotfiles, etc.
+
+## Installation & Configuration
+
+It's required to [install ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation) before using `dragonfly.nvim`
 
 Basic installation expample (with `lazy.nvim`):
 
@@ -39,20 +49,27 @@ Basic installation expample (with `lazy.nvim`):
 </details>
 
 <details>
-    <summary>Example for replacing Neo-Tree (like in demo above)</summary>
+    <summary>Example for replacing Neo-Tree</summary>
+
+    Here's an example of setting up `dragonfly.nvim` such that it closes and replaces Neotree when it opens, and reopens Neotree when it closes.
 
 ```lua
 {
     "vi013t/dragonfly.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = {
+
+        -- Called when dragonfly is opened
         on_open = function()
             if vim.fn.exists(":NeoTreeClose") then vim.cmd("NeoTreeClose") end
         end,
+
+        -- Called when dragonfly is closed
         on_close = function()
-            require("neo-tree") -- Load neo-tree in case it isn't yet
-            vim.cmd("Neotree")
+            local has_neotree = pcall(function() require("neo-tree") end)
+            if has_neotree then vim.cmd("Neotree") end
         end,
+
     },
     keys = {
         { "<C-/>", "<cmd>Dragonfly<cr>" }
@@ -93,3 +110,11 @@ Basic installation expample (with `lazy.nvim`):
 
 </details>
 
+## FAQ
+
+- Why use `dragonfly.nvim` over built-in Vim searching?
+    - `dragonfly.nvim` features project-wide searching that can respect `.gitignore`, among other things.
+- Why use `dragonfly.nvim` over [`nvim-spectre`](https://github.com/nvim-pack/nvim-spectre) / [`fzf-lua`](https://github.com/ibhagwan/fzf-lua) / etc.?
+    - Up to you. This plugin was designed to be tightly focused with a simple and intuitive UI.
+- Why is it called `dragonfly.nvim`?
+    - Dragonflies are the best hunters of any creatures. This plugin helps you hunt down strings rapidly.
