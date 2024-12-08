@@ -4,6 +4,8 @@
 
 A pretty search & replace plugin for Neovim.
 
+## 🖼️Screenshots
+
 <details>
 	<summary><strong>Screenshots</strong></summary>
 	<p>Project-Wide Search & Replace:</p>
