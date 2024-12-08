@@ -211,6 +211,8 @@ function project_ui.perform_search()
 	if not state.search_options.regex then table.insert(ripgrep_command, "--fixed-strings") end
 	if not state.search_options.case_sensitive then table.insert(ripgrep_command, "--ignore-case") end
 	if state.search_options.whole_word then table.insert(ripgrep_command, "--word-regexp") end
+	if not vim.list_contains(config.options.ignore, "gitignored") then table.insert(ripgrep_command, "--no-ignore-vcs") end
+	if not vim.list_contains(config.options.ignore, "dotfiles") then table.insert(ripgrep_command, "--no-ignore-dot") end
 	table.insert(ripgrep_command, project_ui.search_string)
 
 	-- Run ripgrep

@@ -55,6 +55,10 @@ Basic installation expample (with `lazy.nvim`):
             case_sensitive = true,
             regex = false,
             whole_word = false,
+        },
+        ignore = {
+            "gitignored",
+            "dotfiles",
         }
     },
     keys = {

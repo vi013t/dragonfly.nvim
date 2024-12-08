@@ -16,7 +16,7 @@ local default_options = {
 		regex = false,
 		whole_word = false,
 	},
-	ignored = {
+	ignore = {
 		"gitignored",
 		"dotfiles",
 	}
