@@ -15,6 +15,10 @@ local default_options = {
 		case_sensitive = true,
 		regex = false,
 		whole_word = false,
+	},
+	ignored = {
+		"gitignored",
+		"dotfiles",
 	}
 }
 

@@ -454,7 +454,7 @@ local function create_matches_window()
 	project_ui.match_buffer = vim.api.nvim_create_buf(false, true)
 
 	local row = 8
-	if state.replace then row = 16 end
+	if state.replace then row = 15 end
 
 	project_ui.match_window = vim.api.nvim_open_win(project_ui.match_buffer, false, {
 		relative = "win",

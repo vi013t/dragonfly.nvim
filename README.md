@@ -1,6 +1,6 @@
-# `dragonfly.nvim`
+# 🪰 `dragonfly.nvim`
 
-**Warning: Dragonfly is in beta. Expect some bugs.**
+⚠️ **Warning: Dragonfly is in beta. Expect some bugs.**
 
 A pretty search & replace plugin for Neovim.
 
@@ -12,18 +12,17 @@ A pretty search & replace plugin for Neovim.
     <img src="./docs/demo2.png" />
 </details>
 
-## Features
+## ✨ Features
 
 `dragonfly.nvim` comes with the following features:
 
--   (Prettier) single file search and replace
--   Project-wide search and replace
--   Optional case sensitivity
--   Optional regular expression matching and replacing
--   Optional ignoring for gitignored files, dotfiles, etc.
--   Rapid performance with [ripgrep](https://github.com/BurntSushi/ripgrep)
+-   🔍 (Prettier) single file search and replace
+-   📁 Project-wide search and replace
+-   ✅ Toggles for case sensitivity, regular expression searching, and whole-word-only matching
+-   🚫 Optional ignoring for gitignored files, dotfiles, etc.
+-   ⚡ Rapid performance with [ripgrep](https://github.com/BurntSushi/ripgrep)
 
-## Installation & Configuration
+## 📦 Installation & Configuration
 
 It's required to [install ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation) before using `dragonfly.nvim`.
 
@@ -53,8 +52,9 @@ Basic installation expample (with `lazy.nvim`):
         on_open = function() end,
         on_close = function() end,
         default_search_options = {
-            case_sensitive = false,
+            case_sensitive = true,
             regex = false,
+            whole_word = false,
         }
     },
     keys = {
@@ -134,9 +134,9 @@ Basic installation expample (with `lazy.nvim`):
 
 </details>
 
-## Usage
+## 🔌 Usage
 
-### Single-Buffer Search
+### 🔍 Single-Buffer Search
 
 `dragonfly.nvim` provides a prettier single-buffer search and replace. `:DragonflyBuffer` will open a single-buffer search, and `:DragonflyBufferReplace` will open a single-buffer search and replace.
 
@@ -146,7 +146,7 @@ Use `tab` and `shift + tab` to navigate to the next and previous input boxes, re
 
 Search matches are automatically highlighted, but switching into insert or command mode will unhighlight them all.
 
-### Project Search
+### 📁 Project Search
 
 `dragonfly.nvim` provides a pretty project-wide search and replace. `:DragonflyProject` will open a project-wide search, and `:DragonflyProjectReplace` will open a project-wide search and replace.
 
@@ -156,7 +156,7 @@ Use `tab` and `shift + tab` to navigate to the next and previous input boxes, re
 
 Pressing `enter` on a search match will jump you to that match.
 
-## FAQ
+## ❓FAQ
 
 -   Why use `dragonfly.nvim` over built-in Vim searching?
     -   `dragonfly.nvim` features project-wide searching that can respect `.gitignore`, among other things.
