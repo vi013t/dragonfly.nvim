@@ -302,7 +302,7 @@ local function create_help_window()
 		row = 10,
 		col = -1,
 		width = 31,
-		height = 13,
+		height = 17,
 		style = "minimal",
 		zindex = 9999,
 		border = "rounded",
@@ -322,12 +322,18 @@ local function create_help_window()
 		{ { " <C-c>", highlight = "@type" }, { ": Toggle Case Sensitivity" } })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer,
 		{ { " <C-r>", highlight = "@type" }, { ": Toggle Regex Searching" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer,
+		{ { " <C-w>", highlight = "@type" }, { ": Toggle Whole Words Only" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer)
 	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " <Tab>", highlight = "@type" }, { ": Next text box" } })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer,
 		{ { " <S-Tab>", highlight = "@type" }, { ": Previous text box" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer)
 	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " <Enter>", highlight = "@type" }, { ": Jump to match" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " <C-\\>", highlight = "@type" }, { ": Replace All" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer)
 	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " <Esc>", highlight = "@type" }, { ": Unfocus Dragonfly" } })
-	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " q", highlight = "@type" }, { ": Close Dragonfly" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " <C-q>", highlight = "@type" }, { ": Close Dragonfly" } })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer)
 	vim.api.nvim_buf_append_line(project_ui.help_buffer)
 	vim.api.nvim_buf_append_line(project_ui.help_buffer, { " Press q to close this window", highlight = "@comment" })
@@ -432,6 +438,11 @@ local function create_replace_window()
 	vim.keymap.set("i", "<Esc>", function()
 		utils.exit_insert_mode()
 		vim.api.nvim_set_current_win(state.previous_window)
+	end, { buffer = project_ui.replace_buffer })
+
+	-- Close buffer
+	vim.keymap.set("i", "<C-q>", function()
+		project_ui.close()
 	end, { buffer = project_ui.replace_buffer })
 
 	-- Tab into search
