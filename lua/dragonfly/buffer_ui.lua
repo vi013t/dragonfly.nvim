@@ -13,29 +13,18 @@ local function create_search_options_window()
 		relative = "win",
 		win = buffer_ui.search_window,
 		row = 0,
-		col = 30 - 6,
-		width = 6,
+		col = 30,
+		width = 9,
 		height = 1,
 		style = "minimal",
-		zindex = 999
+		zindex = 999,
+		anchor = "NE"
 	})
 
 	vim.api.nvim_set_option_value("winhighlight",
 		"Normal:Normal,NormalNC:Normal,FloatBorder:DragonflySearchboxBorder,Search:Normal,CurSearch:Normal",
 		{ win = buffer_ui.search_options_window }
 	)
-
-	-- Toggle case sensitive
-	vim.keymap.set("i", "<C-c>", function()
-		state.search_options.case_sensitive = not state.search_options.case_sensitive
-		buffer_ui.perform_search()
-	end, { buffer = buffer_ui.search_buffer })
-
-	-- Toggle regex
-	vim.keymap.set("i", "<C-r>", function()
-		state.search_options.regex = not state.search_options.regex
-		buffer_ui.perform_search()
-	end, { buffer = buffer_ui.search_buffer })
 end
 
 --- Adds the search text to the search register, accounting for case sensitivity and regular
@@ -56,7 +45,15 @@ function buffer_ui.perform_search()
 		search_string = search_string .. "\\c"
 	end
 
+	if state.search_options.whole_word then
+		search_string = search_string .. "\\<"
+	end
+
 	search_string = search_string .. buffer_ui.search_string
+
+	if state.search_options.whole_word then
+		search_string = search_string .. "\\>"
+	end
 
 	vim.fn.setreg("/", search_string)
 
@@ -67,15 +64,19 @@ end
 ---
 ---@return nil
 function buffer_ui.redraw()
-	vim.api.nvim_buf_set_lines(buffer_ui.search_options_buffer, 0, 1, true, { "Aa .* " })
+	vim.api.nvim_buf_set_lines(buffer_ui.search_options_buffer, 0, 1, true, { " Aa .* " })
 
 	local case_sensitive_highlight = "@comment"
 	if state.search_options.case_sensitive then case_sensitive_highlight = "@type" end
-	vim.api.nvim_buf_add_highlight(buffer_ui.search_options_buffer, -1, case_sensitive_highlight, 0, 0, 2)
+	vim.api.nvim_buf_add_highlight(buffer_ui.search_options_buffer, -1, case_sensitive_highlight, 0, 0, 3)
 
 	local regex_highlight = "@comment"
 	if state.search_options.regex then regex_highlight = "@type" end
-	vim.api.nvim_buf_add_highlight(buffer_ui.search_options_buffer, -1, regex_highlight, 0, 3, -1)
+	vim.api.nvim_buf_add_highlight(buffer_ui.search_options_buffer, -1, regex_highlight, 0, 3, 6)
+
+	local whole_word_highlight = "@comment"
+	if state.search_options.whole_word then whole_word_highlight = "@type" end
+	vim.api.nvim_buf_add_highlight(buffer_ui.search_options_buffer, -1, whole_word_highlight, 0, 6, -1)
 end
 
 --- Creates the search window. This is the window that the user types into to search.
@@ -103,6 +104,24 @@ local function create_search_window()
 		"Normal:Normal,NormalNC:Normal,FloatBorder:DragonflySearchboxBorder,Search:Normal,CurSearch:Normal",
 		{ win = buffer_ui.search_window }
 	)
+
+	-- Toggle case sensitive
+	vim.keymap.set("i", "<C-c>", function()
+		state.search_options.case_sensitive = not state.search_options.case_sensitive
+		buffer_ui.perform_search()
+	end, { buffer = buffer_ui.search_buffer })
+
+	-- Toggle regex
+	vim.keymap.set("i", "<C-r>", function()
+		state.search_options.regex = not state.search_options.regex
+		buffer_ui.perform_search()
+	end, { buffer = buffer_ui.search_buffer })
+
+	-- Toggle whole_word
+	vim.keymap.set("i", "<C-w>", function()
+		state.search_options.whole_word = not state.search_options.whole_word
+		buffer_ui.perform_search()
+	end, { buffer = buffer_ui.search_buffer })
 
 	vim.api.nvim_create_autocmd("TextChangedI", {
 		buffer = buffer_ui.search_buffer,

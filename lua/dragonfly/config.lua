@@ -12,8 +12,9 @@ local default_options = {
 	on_close = function() end,
 	on_open = function() end,
 	default_search_options = {
-		case_sensitive = false,
+		case_sensitive = true,
 		regex = false,
+		whole_word = false,
 	}
 }
 

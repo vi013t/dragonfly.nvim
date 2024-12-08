@@ -90,6 +90,26 @@ local function group_results(results)
 	return group_paths(paths)
 end
 
+local function replace_all()
+	for _, match in ipairs(project_ui.match_lines) do
+		if not match then goto continue end
+
+		local sed_command = ("%ds/^\\(.\\{%d\\}\\).\\{%d\\}/\\1%s/"):format(
+			match.line,
+			match.column - 1,
+			#match.match,
+			project_ui.replace_string
+		)
+
+		vim.system({ "sed", "-i", sed_command, match.file_name }):wait()
+
+		::continue::
+	end
+
+	utils.reload_buffers()
+	project_ui.perform_search()
+end
+
 --- Draws the matches onto the window.
 ---
 ---@param folders MatchDirectory
@@ -142,7 +162,7 @@ local function draw_matches(folders, indent)
 		table.insert(line, { icon, highlight = icon_color })
 		table.insert(line, { " " .. name })
 
-		vim.api.nvim_buf_append_line(project_ui.main_buffer, line)
+		vim.api.nvim_buf_append_line(project_ui.match_buffer, line)
 		table.insert(project_ui.match_lines, false)
 
 		draw_matches(contents, indent + 1)
@@ -158,7 +178,7 @@ local function draw_matches(folders, indent)
 		local bar = "│ "
 		if index == #folders then bar = "└ " end
 
-		vim.api.nvim_buf_append_line(project_ui.main_buffer, {
+		vim.api.nvim_buf_append_line(project_ui.match_buffer, {
 			{ indentation .. bar .. tostring(match.line) .. ":" .. tostring(match.column) .. ": ", highlight = "@comment" },
 			{ match.match,                                                                         highlight = "@type" },
 		})
@@ -166,13 +186,14 @@ local function draw_matches(folders, indent)
 	end
 end
 
---- Performs a project-wide search. This runs ripgrep with the current text in the searchbox, accounting
+--- Performs a project-wide search. This runs ripgreping
 --- for search options such as case sensitivity and regex. The UI is redrawn, updating all matches shown
 --- in the window.
 ---
 ---@return nil
 function project_ui.perform_search()
 	if not project_ui.is_open() then return end
+	vim.api.nvim_buf_set_lines(project_ui.match_buffer, 0, -1, false, {})
 
 	-- Reset matches
 	project_ui.matches = {}
@@ -189,6 +210,7 @@ function project_ui.perform_search()
 	local ripgrep_command = { "rg", "--no-heading", "--vimgrep", "--color=never", "--only-matching", }
 	if not state.search_options.regex then table.insert(ripgrep_command, "--fixed-strings") end
 	if not state.search_options.case_sensitive then table.insert(ripgrep_command, "--ignore-case") end
+	if state.search_options.whole_word then table.insert(ripgrep_command, "--word-regexp") end
 	table.insert(ripgrep_command, project_ui.search_string)
 
 	-- Run ripgrep
@@ -220,6 +242,15 @@ function project_ui.redraw()
 		vim.api.nvim_buf_append_line(project_ui.main_buffer)
 		vim.api.nvim_buf_append_line(project_ui.main_buffer)
 		vim.api.nvim_buf_append_line(project_ui.main_buffer)
+		vim.api.nvim_buf_append_line(project_ui.main_buffer,
+			{
+				{ "", highlight = "DragonflyReplaceAllEnd" },
+				{ " Ctrl + \\ to replace all ", highlight = "DragonflyReplaceAll" },
+				{ "", highlight = "DragonflyReplaceAllEnd" },
+			},
+			{ center_in = project_ui.main_window }
+		)
+		vim.api.nvim_buf_append_line(project_ui.main_buffer)
 	end
 
 	vim.api.nvim_buf_append_line(project_ui.main_buffer, { "  Matches 󱨉", highlight = "@type" })
@@ -231,25 +262,27 @@ function project_ui.redraw()
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
 
-	vim.api.nvim_buf_set_lines(project_ui.search_options_buffer, 0, 1, true, { "Aa .* " })
+	vim.api.nvim_buf_set_lines(project_ui.search_options_buffer, 0, 1, true, { " Aa .* " })
 
 	local case_sensitive_highlight = "@comment"
 	if state.search_options.case_sensitive then case_sensitive_highlight = "@type" end
-	vim.api.nvim_buf_add_highlight(project_ui.search_options_buffer, -1, case_sensitive_highlight, 0, 0, 2)
+	vim.api.nvim_buf_add_highlight(project_ui.search_options_buffer, -1, case_sensitive_highlight, 0, 0, 3)
 
 	local regex_highlight = "@comment"
 	if state.search_options.regex then regex_highlight = "@type" end
-	vim.api.nvim_buf_add_highlight(project_ui.search_options_buffer, -1, regex_highlight, 0, 3, -1)
+	vim.api.nvim_buf_add_highlight(project_ui.search_options_buffer, -1, regex_highlight, 0, 3, 6)
+
+	local whole_word_highlight = "@comment"
+	if state.search_options.whole_word then whole_word_highlight = "@type" end
+	vim.api.nvim_buf_add_highlight(project_ui.search_options_buffer, -1, whole_word_highlight, 0, 6, -1)
 end
 
 --- Jumps to the match that the cursor is over. If the cursor is not over a match, does nothing.
 ---
 ---@return nil
 local function jump_to_match()
-	local line = vim.api.nvim_win_get_cursor(project_ui.main_window)[1]
-	local blank_lines = 8
-	if state.replace then blank_lines = blank_lines + 5 end
-	local match = project_ui.match_lines[line - blank_lines]
+	local line = vim.api.nvim_win_get_cursor(project_ui.match_window)[1]
+	local match = project_ui.match_lines[line]
 	if not match then return end
 	vim.api.nvim_set_current_win(state.previous_window)
 	vim.cmd(":e " .. match.file_name)
@@ -308,13 +341,32 @@ local function create_main_window()
 		style = "minimal",
 		split = "left",
 	})
-	vim.api.nvim_set_option_value("number", false, { win = project_ui.main_window })
-	vim.api.nvim_set_option_value("cursorline", false, { win = project_ui.main_window })
 	vim.api.nvim_set_option_value("filetype", "dragonfly", { buf = project_ui.main_buffer })
 	vim.api.nvim_set_option_value("winhighlight", "Normal:NormalFloat,NormalNC:NormalFloat",
 		{ win = project_ui.main_window })
 	vim.keymap.set("n", "q", project_ui.close, { buffer = project_ui.main_buffer })
-	vim.keymap.set("n", "<CR>", jump_to_match, { buffer = project_ui.main_buffer })
+
+	vim.api.nvim_create_autocmd("BufEnter", {
+		callback = function()
+			pcall(function()
+				if vim.api.nvim_get_current_buf() == project_ui.main_buffer then
+					if project_ui.coming_from_matches then
+						vim.api.nvim_set_current_win(state.previous_window)
+					else
+						vim.api.nvim_set_current_win(project_ui.search_window)
+						vim.api.nvim_set_current_buf(project_ui.search_buffer)
+						vim.api.nvim_command("startinsert")
+					end
+				end
+			end)
+		end
+	})
+
+	vim.api.nvim_create_autocmd("BufLeave", {
+		callback = function()
+			project_ui.coming_from_matches = vim.api.nvim_get_current_buf() == project_ui.match_buffer
+		end
+	})
 end
 
 --- Creates the help hint window, which is the window at the bottom of the main window that shows
@@ -333,6 +385,7 @@ local function create_help_hint_window()
 	})
 	vim.api.nvim_set_option_value("winhighlight", "Normal:NormalFloat,NormalNC:NormalFloat",
 		{ win = project_ui.help_hint_window })
+	vim.api.nvim_set_option_value("filetype", "dragonfly", { buf = project_ui.help_hint_buffer })
 	vim.api.nvim_buf_set_lines(project_ui.help_hint_buffer, 0, 1, true, { "  Press Ctrl + ? for help" })
 	vim.api.nvim_buf_add_highlight(project_ui.help_hint_buffer, -1, "@comment", 0, 0, -1)
 	vim.api.nvim_buf_add_highlight(project_ui.help_hint_buffer, -1, "@type", 0, #"  Press ", #"  Press Ctrl + ?")
@@ -354,6 +407,7 @@ local function create_replace_window()
 	})
 	vim.api.nvim_set_option_value("winhighlight", "Normal:NormalFloat,NormalNC:NormalFloat",
 		{ win = project_ui.replace_window })
+	vim.api.nvim_set_option_value("filetype", "dragonfly", { buf = project_ui.replace_buffer })
 
 	-- Add previous replace text
 	if project_ui.replace_string then
@@ -362,17 +416,13 @@ local function create_replace_window()
 
 	-- Tab into matches
 	vim.keymap.set("i", "<Tab>", function()
-		vim.api.nvim_set_current_win(project_ui.main_window)
-		vim.api.nvim_set_current_buf(project_ui.main_buffer)
-		vim.api.nvim_win_set_cursor(project_ui.main_window, { 14, 0 })
-		vim.api.nvim_set_option_value("cursorline", true, { win = project_ui.main_window })
+		vim.api.nvim_set_current_win(project_ui.match_window)
+		vim.api.nvim_set_current_buf(project_ui.match_buffer)
 		utils.exit_insert_mode()
 	end, { buffer = project_ui.replace_buffer })
 	vim.keymap.set("i", "<CR>", function()
-		vim.api.nvim_set_current_win(project_ui.main_window)
-		vim.api.nvim_set_current_buf(project_ui.main_buffer)
-		vim.api.nvim_win_set_cursor(project_ui.main_window, { 14, 0 })
-		vim.api.nvim_set_option_value("cursorline", true, { win = project_ui.main_window })
+		vim.api.nvim_set_current_win(project_ui.match_window)
+		vim.api.nvim_set_current_buf(project_ui.match_buffer)
 		utils.exit_insert_mode()
 	end, { buffer = project_ui.replace_buffer })
 
@@ -395,6 +445,30 @@ local function create_replace_window()
 				"\n")
 		end,
 	})
+
+	vim.keymap.set("n", "<C-\\>", replace_all, { buffer = project_ui.replace_buffer })
+end
+
+local function create_matches_window()
+	local vim_height = vim.api.nvim_get_option_value("lines", { scope = "global" })
+	project_ui.match_buffer = vim.api.nvim_create_buf(false, true)
+
+	local row = 8
+	if state.replace then row = 16 end
+
+	project_ui.match_window = vim.api.nvim_open_win(project_ui.match_buffer, false, {
+		relative = "win",
+		row = row,
+		col = 1,
+		height = vim_height - 16,
+		width = 31,
+		win = project_ui.main_window
+	})
+	vim.api.nvim_set_option_value("cursorline", true, { win = project_ui.match_window })
+	vim.api.nvim_set_option_value("filetype", "dragonfly", { buf = project_ui.match_buffer })
+	vim.keymap.set("n", "q", project_ui.close, { buffer = project_ui.match_buffer })
+	vim.keymap.set("n", "<CR>", jump_to_match, { buffer = project_ui.match_buffer })
+	vim.keymap.set("n", "<C-\\>", replace_all, { buffer = project_ui.match_buffer })
 end
 
 --- Creates the search window, which is the textbox for entering search text.
@@ -411,6 +485,7 @@ local function create_search_window()
 		border = "rounded",
 		win = project_ui.main_window
 	})
+	vim.api.nvim_set_option_value("filetype", "dragonfly", { buf = project_ui.search_buffer })
 	vim.api.nvim_set_option_value("winhighlight", "Normal:NormalFloat,NormalNC:NormalFloat",
 		{ win = project_ui.search_window })
 
@@ -439,11 +514,19 @@ local function create_search_window()
 		project_ui.perform_search()
 	end, { buffer = project_ui.search_buffer })
 
+	-- Toggle whole word
+	vim.keymap.set("i", "<C-w>", function()
+		state.search_options.whole_word = not state.search_options.whole_word
+		project_ui.perform_search()
+	end, { buffer = project_ui.search_buffer })
+
 	-- Help window
 	vim.keymap.set("i", "<C-?>", function()
 		create_help_window()
 		utils.exit_insert_mode()
 	end, { buffer = project_ui.search_buffer })
+
+	vim.keymap.set("n", "<C-\\>", replace_all, { buffer = project_ui.search_buffer })
 
 	-- Tab into replace box
 	if state.replace then
@@ -503,12 +586,14 @@ local function create_search_options_window()
 		relative = "win",
 		win = project_ui.search_window,
 		row = 0,
-		col = 31 - 6,
-		width = 6,
+		col = 31,
+		width = 9,
 		height = 1,
 		style = "minimal",
-		zindex = 999
+		zindex = 999,
+		anchor = "NE"
 	})
+	vim.api.nvim_set_option_value("filetype", "dragonfly", { buf = project_ui.search_options_buffer })
 end
 
 --- Opens a project-wide search window.
@@ -529,6 +614,7 @@ function project_ui.open_window()
 	create_search_window()
 	if state.replace then create_replace_window() end
 	create_search_options_window()
+	create_matches_window()
 	create_help_hint_window()
 
 	-- Redraw the UI
@@ -552,6 +638,7 @@ function project_ui.close(no_callback)
 		vim.api.nvim_buf_delete(project_ui.replace_buffer, { force = true })
 		vim.api.nvim_buf_delete(project_ui.main_buffer, { force = true })
 		vim.api.nvim_buf_delete(project_ui.help_hint_buffer, { force = true })
+		vim.api.nvim_buf_delete(project_ui.match_buffer, { force = true })
 		pcall(function() vim.api.nvim_buf_delete(project_ui.help_buffer, { force = true }) end)
 	end)
 
