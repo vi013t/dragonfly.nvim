@@ -4,7 +4,7 @@
 
 A pretty search & replace plugin for Neovim.
 
-## 🖼️Screenshots
+## 🖼️ Screenshots
 
 <details>
 	<summary><strong>Screenshots</strong></summary>
