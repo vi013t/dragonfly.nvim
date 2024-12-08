@@ -1,19 +1,27 @@
 # `dragonfly.nvim`
 
+**Warning: Dragonfly is in beta. Expect some bugs.**
+
 A pretty search & replace plugin for Neovim.
 
-![demo](./docs/demo.png)
+<details>
+	<summary>Screenshots</summary>
+	<p>Project-Wide Search & Replace:</p>
+    <img src="./docs/demo.png" />
+	<p>Single Buffer Search & Replace:</p>
+    <img src="./docs/demo2.png" />
+</details>
 
 ## Features
 
 `dragonfly.nvim` comes with the following features:
 
-- (Prettier) single file search and replace
-- Project-wide search and replace
-- Optional case sensitivity
-- Optional regular expression matching and replacing
-- Optional ignoring for gitignored files, dotfiles, etc.
-- Rapid performance with [rripgrepshiripgreppy
+-   (Prettier) single file search and replace
+-   Project-wide search and replace
+-   Optional case sensitivity
+-   Optional regular expression matching and replacing
+-   Optional ignoring for gitignored files, dotfiles, etc.
+-   Rapid performance with [rripgrepshiripgreppy
 
 ## Installation & Configuration
 
@@ -57,6 +65,7 @@ Basic installation expample (with `lazy.nvim`):
     }
 }
 ```
+
 </details>
 
 <details>
@@ -91,6 +100,7 @@ Basic installation expample (with `lazy.nvim`):
 },
 
 ```
+
 </details>
 
 <details>
@@ -148,9 +158,9 @@ Pressing `enter` on a search match will jump you to that match.
 
 ## FAQ
 
-- Why use `dragonfly.nvim` over built-in Vim searching?
-    - `dragonfly.nvim` features project-wide searching that can respect `.gitignore`, among other things.
-- Why use `dragonfly.nvim` over [`nvim-spectre`](https://github.com/nvim-pack/nvim-spectre) / [`fzf-lua`](https://github.com/ibhagwan/fzf-lua) / etc.?
-    - Up to you. This plugin was designed to be tightly focused with a simple and intuitive UI.
-- Why is it called `dragonfly.nvim`?
-    - Dragonflies are the best hunters of any creatures. This plugin helps you hunt down strings rapidly.
+-   Why use `dragonfly.nvim` over built-in Vim searching?
+    -   `dragonfly.nvim` features project-wide searching that can respect `.gitignore`, among other things.
+-   Why use `dragonfly.nvim` over [`nvim-spectre`](https://github.com/nvim-pack/nvim-spectre) / [`fzf-lua`](https://github.com/ibhagwan/fzf-lua) / etc.?
+    -   Up to you. This plugin was designed to be tightly focused with a simple and intuitive UI.
+-   Why is it called `dragonfly.nvim`?
+    -   Dragonflies are the best hunters of any creatures. This plugin helps you hunt down strings rapidly.
