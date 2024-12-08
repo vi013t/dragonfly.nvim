@@ -609,6 +609,7 @@ end
 ---
 ---@return nil
 function project_ui.open_window()
+	vim.opt.hlsearch = false
 	-- Store the current window
 	if not state.previous_window then state.previous_window = vim.fn.win_getid() end
 
