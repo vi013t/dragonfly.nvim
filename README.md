@@ -5,7 +5,7 @@
 A pretty search & replace plugin for Neovim.
 
 <details>
-	<summary>Screenshots</summary>
+	<summary><strong>Screenshots</strong></summary>
 	<p>Project-Wide Search & Replace:</p>
     <img src="./docs/demo.png" />
 	<p>Single Buffer Search & Replace:</p>
