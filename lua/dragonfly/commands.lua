@@ -24,19 +24,6 @@ function commands.create_autocommands()
 			end
 		end
 	})
-
-	vim.api.nvim_create_autocmd("BufUnload", {
-		callback = function()
-			local all_buffers = vim.api.nvim_list_bufs()
-			for _, buffer in ipairs(all_buffers) do
-				if vim.api.nvim_buf_is_loaded(buffer) and vim.api.nvim_get_option_value("filetype", { buf = buffer }) ~= "dragonfly" then
-					return
-				end
-			end
-
-			vim.cmd("quit")
-		end
-	})
 end
 
 --- Creates the Dragonfly user commands.
