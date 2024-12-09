@@ -286,7 +286,7 @@ local function jump_to_match()
 	local line = vim.api.nvim_win_get_cursor(project_ui.match_window)[1]
 	local match = project_ui.match_lines[line]
 	if not match then return end
-	vim.api.nvim_set_current_win(state.previous_window)
+	pcall(function() vim.api.nvim_set_current_win(state.previous_window) end)
 	vim.cmd(":e " .. match.file_name)
 	vim.fn.cursor({ match.line, match.column })
 end
@@ -359,7 +359,7 @@ local function create_main_window()
 			pcall(function()
 				if vim.api.nvim_get_current_buf() == project_ui.main_buffer then
 					if project_ui.coming_from_matches then
-						vim.api.nvim_set_current_win(state.previous_window)
+						pcall(function() vim.api.nvim_set_current_win(state.previous_window) end)
 					else
 						vim.api.nvim_set_current_win(project_ui.search_window)
 						vim.api.nvim_set_current_buf(project_ui.search_buffer)
@@ -437,7 +437,7 @@ local function create_replace_window()
 	-- Unfocus buffer
 	vim.keymap.set("i", "<Esc>", function()
 		utils.exit_insert_mode()
-		vim.api.nvim_set_current_win(state.previous_window)
+		pcall(function() vim.api.nvim_set_current_win(state.previous_window) end)
 	end, { buffer = project_ui.replace_buffer })
 
 	-- Close buffer
@@ -571,7 +571,7 @@ local function create_search_window()
 	-- Unfocus buffer
 	vim.keymap.set("i", "<Esc>", function()
 		utils.exit_insert_mode()
-		vim.api.nvim_set_current_win(state.previous_window)
+		pcall(function() vim.api.nvim_set_current_win(state.previous_window) end)
 	end, { buffer = project_ui.search_buffer })
 
 	-- Close buffer
