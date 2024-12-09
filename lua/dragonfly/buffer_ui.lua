@@ -66,16 +66,16 @@ end
 function buffer_ui.redraw()
 	vim.api.nvim_buf_set_lines(buffer_ui.search_options_buffer, 0, 1, true, { " Aa .* " })
 
-	local case_sensitive_highlight = "@comment"
-	if state.search_options.case_sensitive then case_sensitive_highlight = "@type" end
+	local case_sensitive_highlight = "DragonflyInactive"
+	if state.search_options.case_sensitive then case_sensitive_highlight = "DragonflyActive" end
 	vim.api.nvim_buf_add_highlight(buffer_ui.search_options_buffer, -1, case_sensitive_highlight, 0, 0, 3)
 
-	local regex_highlight = "@comment"
-	if state.search_options.regex then regex_highlight = "@type" end
+	local regex_highlight = "DragonflyInactive"
+	if state.search_options.regex then regex_highlight = "DragonflyActive" end
 	vim.api.nvim_buf_add_highlight(buffer_ui.search_options_buffer, -1, regex_highlight, 0, 3, 6)
 
-	local whole_word_highlight = "@comment"
-	if state.search_options.whole_word then whole_word_highlight = "@type" end
+	local whole_word_highlight = "DragonflyInactive"
+	if state.search_options.whole_word then whole_word_highlight = "DragonflyActive" end
 	vim.api.nvim_buf_add_highlight(buffer_ui.search_options_buffer, -1, whole_word_highlight, 0, 6, -1)
 end
 

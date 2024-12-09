@@ -10,7 +10,7 @@ project_ui.matches = {}
 
 --- Data about the match lines displayed in the main window.
 ---
----@type (Match | boolean)[]
+---DragonflyActive (Match | boolean)[]
 project_ui.match_lines = {}
 
 --- Groups matches into a recursive structure for displaying.
@@ -57,7 +57,7 @@ end
 ---
 ---@return MatchDirectory
 local function group_results(results)
-	---@type Match[]
+	---DragonflyActive Match[]
 	local matches = {}
 	for _, result in ipairs(results) do
 		local file_name, line, column, match = result:match("^([^:]+):(%d+):(%d+):(.+)")
@@ -70,7 +70,7 @@ local function group_results(results)
 			})
 	end
 
-	---@type SegmentedMatch[]
+	---DragonflyActive SegmentedMatch[]
 	local paths = {}
 	for _, match in ipairs(matches) do
 		local path_segments = {}
@@ -152,11 +152,11 @@ local function draw_matches(folders, indent)
 		end
 
 		local line = {
-			{ indentation, highlight = "@comment" }
+			{ indentation, highlight = "DragonflyInactive" }
 		}
 
 		if indent ~= 0 then
-			table.insert(line, { "│ ", highlight = "@comment" })
+			table.insert(line, { "│ ", highlight = "DragonflyInactive" })
 		end
 
 		table.insert(line, { icon, highlight = icon_color })
@@ -179,8 +179,8 @@ local function draw_matches(folders, indent)
 		if index == #folders then bar = "└ " end
 
 		vim.api.nvim_buf_append_line(project_ui.match_buffer, {
-			{ indentation .. bar .. tostring(match.line) .. ":" .. tostring(match.column) .. ": ", highlight = "@comment" },
-			{ match.match,                                                                         highlight = "@type" },
+			{ indentation .. bar .. tostring(match.line) .. ":" .. tostring(match.column) .. ": ", highlight = "DragonflyInactive" },
+			{ match.match,                                                                         highlight = "DragonflyActive" },
 		})
 		table.insert(project_ui.match_lines, match)
 	end
@@ -232,14 +232,14 @@ function project_ui.redraw()
 	api.drawn_buffers = {}
 
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
-	vim.api.nvim_buf_append_line(project_ui.main_buffer, { "  Search ", highlight = "@type" })
+	vim.api.nvim_buf_append_line(project_ui.main_buffer, { "  Search ", highlight = "DragonflyActive" })
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
 
 	if state.replace then
-		vim.api.nvim_buf_append_line(project_ui.main_buffer, { "  Replace 󰛔", highlight = "@type" })
+		vim.api.nvim_buf_append_line(project_ui.main_buffer, { "  Replace 󰛔", highlight = "DragonflyActive" })
 		vim.api.nvim_buf_append_line(project_ui.main_buffer)
 		vim.api.nvim_buf_append_line(project_ui.main_buffer)
 		vim.api.nvim_buf_append_line(project_ui.main_buffer)
@@ -255,7 +255,7 @@ function project_ui.redraw()
 		vim.api.nvim_buf_append_line(project_ui.main_buffer)
 	end
 
-	vim.api.nvim_buf_append_line(project_ui.main_buffer, { "  Matches 󱨉", highlight = "@type" })
+	vim.api.nvim_buf_append_line(project_ui.main_buffer, { "  Matches 󱨉", highlight = "DragonflyActive" })
 	vim.api.nvim_buf_append_line(project_ui.main_buffer)
 
 	local matches = group_results(project_ui.matches)
@@ -266,16 +266,16 @@ function project_ui.redraw()
 
 	vim.api.nvim_buf_set_lines(project_ui.search_options_buffer, 0, 1, true, { " Aa .* " })
 
-	local case_sensitive_highlight = "@comment"
-	if state.search_options.case_sensitive then case_sensitive_highlight = "@type" end
+	local case_sensitive_highlight = "DragonflyInactive"
+	if state.search_options.case_sensitive then case_sensitive_highlight = "DragonflyActive" end
 	vim.api.nvim_buf_add_highlight(project_ui.search_options_buffer, -1, case_sensitive_highlight, 0, 0, 3)
 
-	local regex_highlight = "@comment"
-	if state.search_options.regex then regex_highlight = "@type" end
+	local regex_highlight = "DragonflyInactive"
+	if state.search_options.regex then regex_highlight = "DragonflyActive" end
 	vim.api.nvim_buf_add_highlight(project_ui.search_options_buffer, -1, regex_highlight, 0, 3, 6)
 
-	local whole_word_highlight = "@comment"
-	if state.search_options.whole_word then whole_word_highlight = "@type" end
+	local whole_word_highlight = "DragonflyInactive"
+	if state.search_options.whole_word then whole_word_highlight = "DragonflyActive" end
 	vim.api.nvim_buf_add_highlight(project_ui.search_options_buffer, -1, whole_word_highlight, 0, 6, -1)
 end
 
@@ -315,28 +315,34 @@ local function create_help_window()
 		vim.api.nvim_command("startinsert")
 	end, { buffer = project_ui.help_buffer })
 
-	vim.api.nvim_buf_append_line(project_ui.help_buffer, { "Dragonfly Help", highlight = "@type" },
+	vim.api.nvim_buf_append_line(project_ui.help_buffer, { "Dragonfly Help", highlight = "DragonflyActive" },
 		{ center_in = project_ui.help_window })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer)
 	vim.api.nvim_buf_append_line(project_ui.help_buffer,
-		{ { " <C-c>", highlight = "@type" }, { ": Toggle Case Sensitivity" } })
+		{ { " <C-c>", highlight = "DragonflyActive" }, { ": Toggle Case Sensitivity" } })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer,
-		{ { " <C-r>", highlight = "@type" }, { ": Toggle Regex Searching" } })
+		{ { " <C-r>", highlight = "DragonflyActive" }, { ": Toggle Regex Searching" } })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer,
-		{ { " <C-w>", highlight = "@type" }, { ": Toggle Whole Words Only" } })
+		{ { " <C-w>", highlight = "DragonflyActive" }, { ": Toggle Whole Words Only" } })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer)
-	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " <Tab>", highlight = "@type" }, { ": Next text box" } })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer,
-		{ { " <S-Tab>", highlight = "@type" }, { ": Previous text box" } })
+		{ { " <Tab>", highlight = "DragonflyActive" }, { ": Next text box" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer,
+		{ { " <S-Tab>", highlight = "DragonflyActive" }, { ": Previous text box" } })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer)
-	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " <Enter>", highlight = "@type" }, { ": Jump to match" } })
-	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " <C-\\>", highlight = "@type" }, { ": Replace All" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer,
+		{ { " <Enter>", highlight = "DragonflyActive" }, { ": Jump to match" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer,
+		{ { " <C-\\>", highlight = "DragonflyActive" }, { ": Replace All" } })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer)
-	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " <Esc>", highlight = "@type" }, { ": Unfocus Dragonfly" } })
-	vim.api.nvim_buf_append_line(project_ui.help_buffer, { { " <C-q>", highlight = "@type" }, { ": Close Dragonfly" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer,
+		{ { " <Esc>", highlight = "DragonflyActive" }, { ": Unfocus Dragonfly" } })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer,
+		{ { " <C-q>", highlight = "DragonflyActive" }, { ": Close Dragonfly" } })
 	vim.api.nvim_buf_append_line(project_ui.help_buffer)
 	vim.api.nvim_buf_append_line(project_ui.help_buffer)
-	vim.api.nvim_buf_append_line(project_ui.help_buffer, { " Press q to close this window", highlight = "@comment" })
+	vim.api.nvim_buf_append_line(project_ui.help_buffer,
+		{ " Press q to close this window", highlight = "DragonflyInactive" })
 end
 
 --- Creates the main UI window.
@@ -395,8 +401,9 @@ local function create_help_hint_window()
 		{ win = project_ui.help_hint_window })
 	vim.api.nvim_set_option_value("filetype", "dragonfly", { buf = project_ui.help_hint_buffer })
 	vim.api.nvim_buf_set_lines(project_ui.help_hint_buffer, 0, 1, true, { "  Press Ctrl + ? for help" })
-	vim.api.nvim_buf_add_highlight(project_ui.help_hint_buffer, -1, "@comment", 0, 0, -1)
-	vim.api.nvim_buf_add_highlight(project_ui.help_hint_buffer, -1, "@type", 0, #"  Press ", #"  Press Ctrl + ?")
+	vim.api.nvim_buf_add_highlight(project_ui.help_hint_buffer, -1, "DragonflyInactive", 0, 0, -1)
+	vim.api.nvim_buf_add_highlight(project_ui.help_hint_buffer, -1, "DragonflyActive", 0, #"  Press ",
+		#"  Press Ctrl + ?")
 end
 
 --- Creates the replace window, which is the textbox for entering replacement text.

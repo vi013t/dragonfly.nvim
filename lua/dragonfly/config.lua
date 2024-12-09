@@ -7,7 +7,7 @@ local config = {}
 
 --- The default config for `dragonfly.nvim`.
 ---
----@type DragonflyConfig
+---DragonflyActive DragonflyConfig
 local default_options = {
 	on_close = function() end,
 	on_open = function() end,
@@ -19,6 +19,10 @@ local default_options = {
 	ignore = {
 		"gitignored",
 		"dotfiles",
+	},
+	highlights = {
+		inactive = { link = "@comment" },
+		active = { link = "@type" },
 	}
 }
 

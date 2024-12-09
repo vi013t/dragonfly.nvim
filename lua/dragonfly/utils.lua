@@ -1,5 +1,7 @@
 local utils = {}
 
+local config = require("dragonfly.config")
+
 --- Exits from insert mode into normal mode.
 ---
 ---@return nil
@@ -17,6 +19,9 @@ function utils.setup_highlights()
 	vim.api.nvim_set_hl(0, 'FloatBorder', { bg = normal_float_bg, fg = float_border_fg })
 	vim.api.nvim_set_hl(0, "DragonflyReplaceAll", { bg = "#AAFFAA", fg = "#000000" })
 	vim.api.nvim_set_hl(0, "DragonflyReplaceAllEnd", { fg = "#AAFFAA" })
+
+	vim.api.nvim_set_hl(0, "DragonflyActive", config.options.highlights.active)
+	vim.api.nvim_set_hl(0, "DragonflyInactive", config.options.highlights.inactive)
 end
 
 function utils.reload_buffers()
