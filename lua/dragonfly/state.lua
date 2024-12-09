@@ -1,6 +1,6 @@
 --- Global state data for the plugin.
 ---
----DragonflyActive { replace: boolean, search_options: { case_sensitive: boolean, regex: boolean, whole_word: boolean }, previous_buffer?: number, previous_window: integer | nil, is_searching: boolean }
+---@type { replace: boolean, search_options: { case_sensitive: boolean, regex: boolean, whole_word: boolean }, previous_buffer?: number, previous_window: integer | nil, is_searching: boolean }
 local state = {
 	replace = true,
 	search_options = {

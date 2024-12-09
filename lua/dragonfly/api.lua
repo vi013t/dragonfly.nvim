@@ -1,6 +1,6 @@
 local api = {}
 
----DragonflyActive integer[]
+---@type integer[]
 api.drawn_buffers = {}
 
 ---@alias LinePart { [1]?: string, text?: string, highlight?: string }

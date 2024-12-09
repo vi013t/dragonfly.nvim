@@ -61,6 +61,10 @@ Basic installation expample (with `lazy.nvim`):
         ignore = {
             "gitignored",
             "dotfiles",
+        },
+        highlights = {
+            active = { link = "@type" },
+            inactive = { link = "@comment" },
         }
     },
     keys = {

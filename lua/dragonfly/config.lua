@@ -1,13 +1,13 @@
 local state = require("dragonfly.state")
 
----@alias DragonflyConfig { on_close: fun(), on_open: fun(), default_search_options: { case_sensitive: boolean, regex: boolean } }
----@alias PartialDragonflyConfig { on_close?: fun(), on_open?: fun(), default_search_options?: { case_sensitive?: boolean, regex?: boolean } }
+---@alias DragonflyConfig { on_close: fun(), on_open: fun(), default_search_options: { case_sensitive: boolean, regex: boolean }, highlights: { inactive: table<string, string>, active: table<string, string> } }
+---@alias PartialDragonflyConfig { on_close?: fun(), on_open?: fun(), default_search_options?: { case_sensitive?: boolean, regex?: boolean }, highlights?: { inactive?: table<string, string>, active?: table<string, string> } }
 
 local config = {}
 
 --- The default config for `dragonfly.nvim`.
 ---
----DragonflyActive DragonflyConfig
+---@type DragonflyConfig
 local default_options = {
 	on_close = function() end,
 	on_open = function() end,

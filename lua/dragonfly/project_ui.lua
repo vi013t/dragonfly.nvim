@@ -10,7 +10,7 @@ project_ui.matches = {}
 
 --- Data about the match lines displayed in the main window.
 ---
----DragonflyActive (Match | boolean)[]
+---@type (Match | boolean)[]
 project_ui.match_lines = {}
 
 --- Groups matches into a recursive structure for displaying.
@@ -57,7 +57,7 @@ end
 ---
 ---@return MatchDirectory
 local function group_results(results)
-	---DragonflyActive Match[]
+	---@type Match[]
 	local matches = {}
 	for _, result in ipairs(results) do
 		local file_name, line, column, match = result:match("^([^:]+):(%d+):(%d+):(.+)")
@@ -70,7 +70,7 @@ local function group_results(results)
 			})
 	end
 
-	---DragonflyActive SegmentedMatch[]
+	---@type SegmentedMatch[]
 	local paths = {}
 	for _, match in ipairs(matches) do
 		local path_segments = {}
