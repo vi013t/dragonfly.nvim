@@ -51,19 +51,42 @@ Basic installation expample (with `lazy.nvim`):
 {
     "vi013t/dragonfly.nvim",
     opts = {
+        -- Function to call when the project window is opened
         on_open = function() end,
+
+        -- Function to call when the project window is closed
         on_close = function() end,
+
+        -- Default options when searching for the first time since opening Neovim
         default_search_options = {
+
+            -- Whether searches are case-sensitive by default
             case_sensitive = true,
+
+            -- Whether searches use regular expressions by default
             regex = false,
+
+            -- Whether searches match whole-words only by default
             whole_word = false,
         },
+
+        -- Types of files to ignore by default. Currently only supports "gitignored" and "dotfiles".
         ignore = {
+
+            -- Ignore files not tracked by Git
             "gitignored",
+
+            -- Ignore hidden files such as dotfiles
             "dotfiles",
         },
+
+        -- Highlight options
         highlights = {
+
+            -- Highlight for "active" or "foreground" text
             active = { link = "@type" },
+
+            -- Highlight for "inactive" or "background" text
             inactive = { link = "@comment" },
         }
     },
@@ -91,7 +114,7 @@ Basic installation expample (with `lazy.nvim`):
 
         -- Called when dragonfly is opened
         on_open = function()
-            if vim.fn.exists(":NeoTreeClose") then vim.cmd("NeoTreeClose") end
+            if vim.fn.exists(":NeoTreeClose") == 2 then vim.cmd("NeoTreeClose") end
         end,
 
         -- Called when dragonfly is closed
